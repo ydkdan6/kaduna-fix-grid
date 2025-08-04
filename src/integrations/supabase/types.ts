@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fault_reports: {
+        Row: {
+          address: string
+          created_at: string
+          description: string | null
+          fault_type: Database["public"]["Enums"]["fault_type"]
+          id: string
+          phone_number: string
+          status: Database["public"]["Enums"]["fault_status"]
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          description?: string | null
+          fault_type: Database["public"]["Enums"]["fault_type"]
+          id?: string
+          phone_number: string
+          status?: Database["public"]["Enums"]["fault_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          description?: string | null
+          fault_type?: Database["public"]["Enums"]["fault_type"]
+          id?: string
+          phone_number?: string
+          status?: Database["public"]["Enums"]["fault_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_feedback: {
+        Row: {
+          created_at: string
+          fault_report_id: string
+          feedback: string
+          id: string
+          staff_id: string
+        }
+        Insert: {
+          created_at?: string
+          fault_report_id: string
+          feedback: string
+          id?: string
+          staff_id: string
+        }
+        Update: {
+          created_at?: string
+          fault_report_id?: string
+          feedback?: string
+          id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_feedback_fault_report_id_fkey"
+            columns: ["fault_report_id"]
+            isOneToOne: false
+            referencedRelation: "fault_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +114,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      fault_status: "pending" | "in_progress" | "resolved" | "closed"
+      fault_type: "fallen_pole" | "sparks" | "outage" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +242,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      fault_status: ["pending", "in_progress", "resolved", "closed"],
+      fault_type: ["fallen_pole", "sparks", "outage", "other"],
+    },
   },
 } as const
