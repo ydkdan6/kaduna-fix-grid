@@ -225,7 +225,7 @@ export default function Dashboard() {
                 ) : (
                   faultReports.map((report) => (
                     <Card key={report.id}>
-                      <CardContent className="pt-6">
+                      <CardContent className="pt-6 backdrop-blur-xl bg-white/10">
                         <div className="grid gap-4 md:grid-cols-2">
                           <div>
                             <div className="flex items-center gap-2 mb-2">

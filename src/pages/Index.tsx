@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { FaultReportForm } from '@/components/FaultReportForm';
+import FaultReportForm from '@/components/FaultReportForm';
 
 const Index = () => {
   return (
