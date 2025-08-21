@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface FaultReport {
   id: string;
@@ -39,18 +40,19 @@ export default function Dashboard() {
   const [newStatus, setNewStatus] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (loading) return;
     if (!user) {
       navigate('/auth');
       return;
     }
     fetchFaultReports();
     fetchFeedbacks();
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const fetchFaultReports = async () => {
     try {
@@ -164,15 +166,19 @@ export default function Dashboard() {
   };
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
+    try {
+      // Clean up auth state and perform a global sign out, then hard reload
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {}
+      window.location.href = '/auth';
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to sign out.",
         variant: "destructive",
       });
-    } else {
-      navigate('/');
     }
   };
 
