@@ -9,7 +9,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Kaduna Electricity Distribution Company</h1>
           <Link to="/auth">
-            <Button>Staff Login</Button>
+            {/* <Button>Staff Login</Button> */}
           </Link>
         </div>
       </header>
