@@ -93,12 +93,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('staff_feedback')
-        .select(`
-          *,
-          profiles (
-            full_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
