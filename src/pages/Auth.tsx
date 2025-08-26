@@ -105,9 +105,17 @@ export default function Auth() {
           variant: 'destructive',
         });
       } else {
+        // Attempt to sign the user in immediately (works if email confirmation is disabled)
+        const { error: signInErr } = await signIn(email, password);
+        if (!signInErr) {
+          toast({ title: 'Welcome', description: 'Account created!' });
+          window.location.href = '/dashboard';
+          return;
+        }
+        // Fallback: ask user to confirm email
         toast({
-          title: 'Success',
-          description: 'Check your email to confirm your account.',
+          title: 'Almost there',
+          description: 'Check your email to confirm your account before signing in.',
         });
       }
     } catch (err: any) {

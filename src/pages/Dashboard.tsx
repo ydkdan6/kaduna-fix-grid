@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState } from '@/utils/authCleanup';
+import { AlertTriangle, Clock, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface FaultReport {
   id: string;
@@ -42,17 +42,31 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) return;
     fetchFaultReports();
     fetchFeedbacks();
-  }, [user, loading, navigate]);
+    document.title = 'Staff Dashboard | Fault Reports';
+  }, [user, loading]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime:faults')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fault_reports' }, () => {
+        fetchFaultReports();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_feedback' }, () => {
+        fetchFeedbacks();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const fetchFaultReports = async () => {
     try {
@@ -196,6 +210,14 @@ export default function Dashboard() {
     return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const counts = {
+    total: faultReports.length,
+    pending: faultReports.filter((r) => r.status === 'pending').length,
+    in_progress: faultReports.filter((r) => r.status === 'in_progress').length,
+    resolved: faultReports.filter((r) => r.status === 'resolved').length,
+    closed: faultReports.filter((r) => r.status === 'closed').length,
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -217,6 +239,52 @@ export default function Dashboard() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">Overview</CardTitle>
+              <CardDescription>Live summary of all fault reports</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <AlertTriangle className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xl font-semibold">{counts.total}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                    <p className="text-xl font-semibold">{counts.pending}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">In Progress</p>
+                    <p className="text-xl font-semibold">{counts.in_progress}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Resolved</p>
+                    <p className="text-xl font-semibold">{counts.resolved}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Closed</p>
+                    <p className="text-xl font-semibold">{counts.closed}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Fault Reports</CardTitle>

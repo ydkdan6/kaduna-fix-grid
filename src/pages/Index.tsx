@@ -1,16 +1,20 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import FaultReportForm from '@/components/FaultReportForm';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { user, loading } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Kaduna Electricity Distribution Company</h1>
-          <Link to="/auth">
-            <Button>Staff Login</Button>
-          </Link>
+          {!loading && !user && (
+            <Link to="/auth">
+              <Button>Staff Login</Button>
+            </Link>
+          )}
         </div>
       </header>
 
