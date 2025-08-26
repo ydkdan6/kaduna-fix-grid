@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -47,44 +49,84 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      // Clean up any stale auth state and attempt a global sign out first
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {}
 
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+
       toast({
         title: 'Success',
         description: 'Signed in successfully!',
       });
-    }
 
-    setIsLoading(false);
+      // Hard reload to avoid any auth limbo states
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to sign in',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
+    try {
+      // Ensure clean state before attempting sign up
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {}
 
-    if (error) {
+      const { error } = await signUp(email, password, fullName);
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        // Attempt to sign the user in immediately (works if email confirmation is disabled)
+        const { error: signInErr } = await signIn(email, password);
+        if (!signInErr) {
+          toast({ title: 'Welcome', description: 'Account created!' });
+          window.location.href = '/dashboard';
+          return;
+        }
+        // Fallback: ask user to confirm email
+        toast({
+          title: 'Almost there',
+          description: 'Check your email to confirm your account before signing in.',
+        });
+      }
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: error.message,
+        description: err?.message || 'Failed to sign up',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Success',
-        description: 'Check your email to confirm your account.',
-      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Phone, MapPin, FileText, Zap, Send, Loader2 } from 'lucide-react';
-
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 export default function FaultReportForm() {
   const [faultType, setFaultType] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -14,15 +15,8 @@ export default function FaultReportForm() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock toast for demonstration
-  const toast = ({ title, description, variant }) => {
-    console.log(`${title}: ${description}`);
-    alert(`${title}: ${description}`);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const { toast } = useToast();
+  const handleSubmit = async () => {
     if (!faultType || !phoneNumber || !address) {
       toast({
         title: "Error",
@@ -35,13 +29,20 @@ export default function FaultReportForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { error } = await supabase
+        .from('fault_reports')
+        .insert({
+          fault_type: faultType,
+          phone_number: phoneNumber,
+          address,
+          description: description || null,
+        } as any);
+
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Your fault report has been submitted successfully. Our staff will attend to it shortly.",
-        variant: "success",
       });
 
       // Reset form
@@ -60,7 +61,6 @@ export default function FaultReportForm() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 flex items-center justify-center">
       <div className="w-full max-w-lg">
@@ -196,7 +196,7 @@ export default function FaultReportForm() {
               {/* Submit Button */}
               <div className="pt-4">
                 <Button 
-                  type="submit" 
+                  type="button" 
                   onClick={handleSubmit}
                   className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg" 
                   disabled={isSubmitting}
