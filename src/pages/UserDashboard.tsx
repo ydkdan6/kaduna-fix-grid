@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ interface StaffFeedbackRow {
 export default function UserDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-
+  const navigate = useNavigate();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState<FaultReportRow[]>([]);
@@ -80,14 +81,22 @@ export default function UserDashboard() {
     }
   };
 
+  const makeReport = () => {
+    navigate('/report');
+  };
+
   const formatFaultType = (type: string) => type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
+      <header className="flex w-100 border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">My Reports</h1>
         </div>
+
+        <Button disabled={loading} className="m-4">
+                <Link to='/report'>{loading ? 'Reporting...' : 'Make a Report'}</Link>
+              </Button>
       </header>
 
       <main className="container mx-auto px-4 py-8">
